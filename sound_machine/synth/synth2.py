@@ -132,7 +132,7 @@ def update_tone():
         canvas.draw()
 
         # Schedule the next update
-        root.after(10, update_tone)  # Update every 300 milliseconds
+        root.after(10, update_tone)  # Update every 10 milliseconds
 
 # Parameters
 duration_ms = 100
