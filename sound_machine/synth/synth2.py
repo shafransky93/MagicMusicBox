@@ -24,6 +24,10 @@ octave = -4  # Initial octave
 waveform_var = None
 selected_note = None
 
+# Parameters
+duration_ms = 100
+sample_rate = 44100
+
 # Global notes dictionary
 notes = {
     'C': 261.63,
@@ -43,6 +47,9 @@ def get_note_frequency():
     else:
         return 0  # Return 0 if no note is selected
 
+# Initialize audio_samples with silence
+audio_samples = np.zeros(int(sample_rate * duration_ms / 1000), dtype=np.int16)
+
 # Function to generate and play the drone sound
 def toggle_oscillator():
     global oscillator_on, play_obj, audio_samples, cutoff_frequency
@@ -61,6 +68,26 @@ def toggle_oscillator():
 
         # Calculate the time array
         t = np.linspace(0, duration_ms / 1000, int(sample_rate * duration_ms / 1000), endpoint=False)
+
+        # Inside the toggle_oscillator function
+        attack_time = attack_slider.get() / 1000.0  # Convert to seconds
+        decay_time = decay_slider.get() / 1000.0  # Convert to seconds
+        sustain_level = sustain_slider.get() / 100.0  # Convert to a fraction
+        release_time = release_slider.get() / 1000.0  # Convert to seconds
+
+        # Calculate the total duration of the ADSR envelope
+        total_duration = attack_time + decay_time + release_time
+
+        # Create the ADSR envelope
+        envelope = np.zeros_like(t)
+        envelope[:int(attack_time * sample_rate)] = np.linspace(0, 1, int(attack_time * sample_rate))
+        envelope[int(attack_time * sample_rate):int((attack_time + decay_time) * sample_rate)] = np.linspace(1, sustain_level, int(decay_time * sample_rate))
+        envelope[int((attack_time + decay_time) * sample_rate):int((duration_ms / 1000) * sample_rate - release_time * sample_rate)] = sustain_level
+        envelope[int((duration_ms / 1000) * sample_rate - release_time * sample_rate):] = np.linspace(sustain_level, 0, int(release_time * sample_rate))
+
+        # Apply the envelope to the audio samples and convert envelope to int16
+        audio_samples = (audio_samples * envelope).astype(np.int16)
+
 
         # Create the selected waveform (including pulse width for square wave)
         if waveform_type == "Sine":
@@ -132,11 +159,8 @@ def update_tone():
         canvas.draw()
 
         # Schedule the next update
-        root.after(10, update_tone)  # Update every 10 milliseconds
+        root.after(10, update_tone)  # Update every 300 milliseconds
 
-# Parameters
-duration_ms = 100
-sample_rate = 44100
 
 # Create the main window
 root = tk.Tk()
@@ -162,6 +186,31 @@ pulse_width_label.pack()
 pulse_width_slider = tk.Scale(root, from_=0, to=100, orient="horizontal")
 pulse_width_slider.set(50)  # Set initial pulse width to 50%
 pulse_width_slider.pack()
+
+# Attack, Decay, Sustain, and Release sliders
+attack_label = tk.Label(root, text="Attack (ms)")
+attack_label.pack()
+attack_slider = tk.Scale(root, from_=0, to=500, resolution=1, orient="horizontal")
+attack_slider.set(10)
+attack_slider.pack()
+
+decay_label = tk.Label(root, text="Decay (ms)")
+decay_label.pack()
+decay_slider = tk.Scale(root, from_=0, to=500, resolution=1, orient="horizontal")
+decay_slider.set(50)
+decay_slider.pack()
+
+sustain_label = tk.Label(root, text="Sustain (%)")
+sustain_label.pack()
+sustain_slider = tk.Scale(root, from_=0, to=100, orient="horizontal")
+sustain_slider.set(70)
+sustain_slider.pack()
+
+release_label = tk.Label(root, text="Release (ms)")
+release_label.pack()
+release_slider = tk.Scale(root, from_=0, to=500, resolution=1, orient="horizontal")
+release_slider.set(100)
+release_slider.pack()
 
 # Waveform selection
 waveform_label = tk.Label(root, text="Waveform")
