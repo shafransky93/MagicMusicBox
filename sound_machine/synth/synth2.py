@@ -20,13 +20,13 @@ waveform_var = None
 cutoff_frequency_slider = None  # Added cutoff frequency slider
 
 # Global octave, waveform, and selected note variables
-octave = -4  # Initial octave
+octave = 3  # Initial octave
 waveform_var = None
 selected_note = None
 
 # Parameters
 duration_ms = 100
-sample_rate = 44100
+sample_rate = 48000
 
 # Global notes dictionary
 notes = {
@@ -49,6 +49,7 @@ def get_note_frequency():
 
 # Initialize audio_samples with silence
 audio_samples = np.zeros(int(sample_rate * duration_ms / 1000), dtype=np.int16)
+
 
 # Function to generate and play the drone sound
 def toggle_oscillator():
@@ -114,7 +115,7 @@ def toggle_oscillator():
 
 # Function to update the tone and oscilloscope plot
 def update_tone():
-    global oscillator_on, cutoff_frequency
+    global oscillator_on, cutoff_frequency, cutoff_enabled
 
     if oscillator_on:
         # Get the updated amplitude, frequency, waveform type, and pulse width from the sliders
@@ -139,13 +140,14 @@ def update_tone():
         # Generate the updated waveform
         audio_samples = (wave_func(t) * 32767).astype(np.int16)
 
-        # Calculate the updated filter coefficients
-        cutoff_frequency = cutoff_frequency_slider.get()
-        nyquist_frequency = 0.5 * sample_rate
-        b, a = signal.butter(1, cutoff_frequency / nyquist_frequency, btype='low', analog=False)
+        if cutoff_enabled:
+            # Calculate the updated filter coefficients
+            cutoff_frequency = cutoff_frequency_slider.get()
+            nyquist_frequency = 0.5 * sample_rate
+            b, a = signal.butter(1, cutoff_frequency / nyquist_frequency, btype='low', analog=False)
 
-        # Apply the filter
-        audio_samples = signal.lfilter(b, a, audio_samples)
+            # Apply the filter
+            audio_samples = signal.lfilter(b, a, audio_samples)
 
         # Update the audio being played
         play_obj = sa.play_buffer(audio_samples, 1, 2, sample_rate)
@@ -159,12 +161,21 @@ def update_tone():
         canvas.draw()
 
         # Schedule the next update
-        root.after(10, update_tone)  # Update every 300 milliseconds
+        root.after(1, update_tone)  # Update every millisecond
 
 
 # Create the main window
 root = tk.Tk()
-root.title("Drone Sound Generator")
+root.title("Synth")
+
+# Global cutoff frequency state variable
+cutoff_enabled = False
+
+# Function to toggle the cutoff frequency filter on and off
+def toggle_cutoff_frequency():
+    global cutoff_enabled
+    cutoff_enabled = not cutoff_enabled
+
 
 # Create a frame for the oscillator controls
 oscillator_frame = tk.Frame(root)
@@ -175,56 +186,56 @@ amplitude_label = tk.Label(oscillator_frame, text="Amplitude")
 amplitude_label.pack(side="left")
 amplitude_slider = tk.Scale(oscillator_frame, from_=0, to=1, resolution=0.01, orient="horizontal")
 amplitude_slider.set(0.5)
-amplitude_slider.pack(side="left", padx=10)
+amplitude_slider.pack(side="left", padx=0)
 
 # Frequency slider
 frequency_label = tk.Label(oscillator_frame, text="Frequency (Hz)")
 frequency_label.pack(side="left")
 frequency_slider = tk.Scale(oscillator_frame, from_=20, to=2000, resolution=1, orient="horizontal")
 frequency_slider.set(440)
-frequency_slider.pack(side="left", padx=10)
+frequency_slider.pack(side="left", padx=0)
 
 # Pulse width (Duty Cycle) slider
 pulse_width_label = tk.Label(oscillator_frame, text="Pulse Width")
 pulse_width_label.pack(side="left")
 pulse_width_slider = tk.Scale(oscillator_frame, from_=0, to=100, orient="horizontal")
 pulse_width_slider.set(50)  # Set initial pulse width to 50%
-pulse_width_slider.pack(side="left", padx=10)
+pulse_width_slider.pack(side="left", padx=0)
 
 # Attack, Decay, Sustain, and Release sliders
 adsr_frame = tk.Frame(root)
-adsr_frame.pack(pady=10)
+adsr_frame.pack(pady=0)
 
 attack_label = tk.Label(adsr_frame, text="Attack (ms)")
 attack_label.pack(side="left")
-attack_slider = tk.Scale(adsr_frame, from_=0, to=500, resolution=1, orient="horizontal")
+attack_slider = tk.Scale(adsr_frame, from_=0, to=1000, resolution=1, orient="horizontal")
 attack_slider.set(10)
-attack_slider.pack(side="left", padx=10)
+attack_slider.pack(side="left", padx=0)
 
 decay_label = tk.Label(adsr_frame, text="Decay (ms)")
 decay_label.pack(side="left")
-decay_slider = tk.Scale(adsr_frame, from_=0, to=500, resolution=1, orient="horizontal")
+decay_slider = tk.Scale(adsr_frame, from_=0, to=1000, resolution=1, orient="horizontal")
 decay_slider.set(50)
-decay_slider.pack(side="left", padx=10)
+decay_slider.pack(side="left", padx=0)
 
 sustain_label = tk.Label(adsr_frame, text="Sustain (%)")
 sustain_label.pack(side="left")
 sustain_slider = tk.Scale(adsr_frame, from_=0, to=100, orient="horizontal")
 sustain_slider.set(70)
-sustain_slider.pack(side="left", padx=10)
+sustain_slider.pack(side="left", padx=0)
 
 release_label = tk.Label(adsr_frame, text="Release (ms)")
 release_label.pack(side="left")
-release_slider = tk.Scale(adsr_frame, from_=0, to=500, resolution=1, orient="horizontal")
+release_slider = tk.Scale(adsr_frame, from_=0, to=1000, resolution=1, orient="horizontal")
 release_slider.set(100)
-release_slider.pack(side="left", padx=10)
+release_slider.pack(side="left", padx=0)
 
 # Waveform selection
 waveform_frame = tk.Frame(root)
 waveform_frame.pack(pady=10)
 
-waveform_label = tk.Label(waveform_frame, text="Waveform")
-waveform_label.pack(side="left", padx=10)
+waveform_label = tk.Label(waveform_frame, text="Waveform:")
+waveform_label.pack(side="left", padx=5)
 
 waveform_var = tk.StringVar(value="Sine")
 
@@ -237,6 +248,14 @@ sine_radio.pack(side="left", padx=10)
 triangle_radio.pack(side="left", padx=10)
 sawtooth_radio.pack(side="left", padx=10)
 square_radio.pack(side="left", padx=10)
+
+# Create a frame for the cutoff frequency controls
+cutoff_frame = tk.Frame(root)
+cutoff_frame.pack(pady=0)
+
+# Create a button to toggle cutoff frequency filter
+cutoff_button = tk.Button(cutoff_frame, text="Toggle Cutoff Frequency", command=toggle_cutoff_frequency)
+cutoff_button.pack(side="left", padx=0)
 
 # Cutoff frequency slider
 filter_frame = tk.Frame(root)
@@ -252,15 +271,6 @@ cutoff_frequency_slider.pack(side="left", padx=10)
 cutoff_frequency = cutoff_frequency_slider.get()
 nyquist_frequency = 0.5 * sample_rate
 b, a = signal.butter(1, cutoff_frequency / nyquist_frequency, btype='low', analog=False)
-
-# Create a frame for the oscilloscope
-oscilloscope_frame = tk.Frame(root)
-oscilloscope_frame.pack(pady=10)
-
-# Create a Figure for the oscilloscope
-fig = plt.figure(figsize=(6, 3))
-canvas = FigureCanvasTkAgg(fig, master=oscilloscope_frame)
-canvas.get_tk_widget().pack()
 
 # Function to handle octave change
 def change_octave(direction):
@@ -300,10 +310,14 @@ def simulate_octave_down(event):
     octave_down_button.invoke()
     
 # Octave buttons
-octave_up_button = tk.Button(root, text="Octave Up", command=lambda: change_octave('up'))
-octave_down_button = tk.Button(root, text="Octave Down", command=lambda: change_octave('down'))
-octave_up_button.pack()
-octave_down_button.pack()
+octave_frame = tk.Frame(root)
+octave_frame.pack(pady=10)
+
+octave_up_button = tk.Button(octave_frame, text="Octave Up", command=lambda: change_octave('up'))
+octave_down_button = tk.Button(octave_frame, text="Octave Down", command=lambda: change_octave('down'))
+
+octave_up_button.pack(side="left")
+octave_down_button.pack(side="left")
 
 # Notes buttons
 notes_label = tk.Label(root, text="Notes")
@@ -312,12 +326,35 @@ notes_buttons_frame = tk.Frame(root)
 notes_buttons_frame.pack()
 
 for note in notes:
-    note_button = tk.Button(notes_buttons_frame, text=note, command=lambda note=note: change_notes(note))
+    note_button = tk.Button(notes_buttons_frame, text=note, command=lambda note=note: change_notes(note),pady=10,padx=30)
     note_button.pack(side="left")
 
 # Generate button
 generate_button = tk.Button(root, text="Toggle Oscillator", command=toggle_oscillator)
-generate_button.pack()
+generate_button.pack(pady=10)
+
+
+# Create a frame for the oscilloscope
+oscilloscope_frame = tk.Frame(root)
+oscilloscope_frame.pack(pady=10)
+
+# Create a Figure for the oscilloscope
+fig = plt.figure(figsize=(6, 3))
+canvas = FigureCanvasTkAgg(fig, master=oscilloscope_frame)
+canvas.get_tk_widget().pack()
+
+
+# Function to toggle the visibility of the oscilloscope
+def toggle_oscilloscope():
+    if oscilloscope_frame.winfo_ismapped():
+        oscilloscope_frame.pack_forget()
+    else:
+        oscilloscope_frame.pack(pady=10)
+
+# Create a button for hiding/showing the oscilloscope
+oscilloscope_button = tk.Button(root, text="Hide/Show Oscilloscope", command=toggle_oscilloscope)
+oscilloscope_button.pack()
+
 
 # Bind keys to notes
 root.bind('a', lambda event: change_notes('C'))
@@ -333,13 +370,142 @@ root.bind('q', lambda event: waveform_var.set("Sine"))
 root.bind('w', lambda event: waveform_var.set("Triangle"))
 root.bind('e', lambda event: waveform_var.set("Sawtooth"))
 root.bind('r', lambda event: waveform_var.set("Square"))
+root.bind('t', lambda event: toggle_cutoff_frequency())
 
 # Bind key press events
 root.bind('<KeyPress>', handle_key)
 root.bind('<Up>', simulate_octave_up)
 root.bind('<Down>', simulate_octave_down)
 
+# Function to create the Help tab
+def create_help_tab():
+    help_window = tk.Toplevel(root)
+    help_window.title("Help")
+    
+    help_text = """
+    - Use the 'Amplitude' slider to adjust the volume of the sound.
+    - Use the 'Frequency' slider to select the desired frequency in Hertz (Hz).
+    - Use the 'Pulse Width' slider to control the pulse width for square waveforms.
+    - Use the 'Attack', 'Decay', 'Sustain', and 'Release' sliders to shape the envelope.
+    - Choose a waveform type (Sine, Triangle, Sawtooth, Square) using the radio buttons.
+    - Toggle the 'Cutoff Frequency' filter using the button.
+    - Octave Up and Octave Down buttons change the selected octave.
+    - Notes buttons (C, D, E, F, G, A, B) select a note.
+    - Press the corresponding letter keys (a, s, d, f, g, h, j) for notes.
+    - Press 'Space' to toggle the oscillator on and off.
+    - Press 'q' for Sine waveform, 'w' for Triangle, 'e' for Sawtooth, 'r' for Square.
+    - Press 't' to toggle the Cutoff Frequency filter on and off.
+    
+    Enjoy making music with the Synth App!
+    """
+    
+    help_label = tk.Label(help_window, text=help_text, justify="left")
+    help_label.pack(padx=20, pady=20)
 
+# Function to create the About tab
+def create_about_tab():
+    about_window = tk.Toplevel(root)
+    about_window.title("About")
+    
+    about_text = """
+    Synth App v1.0
+    Created by Benjamin Shafransky
+    
+    This application allows you to generate and play various audio waveforms using various controls.
+
+    Inspired by teh song ’81: How to Play the Synthesizer by The Magnetic Fields
+    
+    Have fun experimenting with different sounds!
+
+    If interested in my other projects visit my github!
+
+    https://github.com/shafransky93
+    """
+    
+    about_label = tk.Label(about_window, text=about_text, justify="left", padx=20, pady=20)
+    about_label.pack()
+    
+
+# Function to create the About tab
+def create_how_tab():
+    how_window = tk.Toplevel(root)
+    how_window.title("How to play")
+    
+    how_text = """
+    The Magnetic Fields - '81 How to Play the Synthesizer:
+
+    Take a single oscillator
+    Producing a drone
+    Send it to the wave shaper
+    Altering the tone
+    This can be a triangle
+    Sawtooth or a square
+    Modulate the pulse width
+    Nobody will care
+
+    This is how to play the synthesizer
+    This is how to play the synthesizer
+
+    Now go to the filter bank
+    Low, high, band or notch
+    Fiddle with the cutoff point
+    Pour yourself a Scotch
+    Modern filters oscillate
+    All by themselves
+    It sounds like you're torturing
+    Little metal elves
+
+    This is how to play the synthesizer
+    This is how to play the synthesizer
+
+    Nextly, shape the envelope
+    AKA ADSR
+    Attack, delay, sustain, release
+    Which means how loud you are
+    One millisecond to the next
+    Whether you pluck or lurch
+    Or ooze like an organist
+    In a Venusian church
+
+    This is how to play the synthesizer
+    This is how to play the synthesizer
+
+    Now you play the synthesizer
+    Don't be lazy now
+    Make it hiss like rattlesnakes
+    Or moo like a cow
+    Crash like a hundred marbles
+    Smashing on the floor
+    You can make a thousand sounds
+    Never heard before
+
+    This is how to play the synthesizer
+    This is how to play the synthesizer
+
+    """
+    
+    how_label = tk.Label(how_window, text=how_text, justify="left", padx=20, pady=20)
+    how_label.pack()
+    
+
+def exit_application():
+    root.destroy()
+    
+# Create a menu bar
+menu_bar = tk.Menu(root)
+root.config(menu=menu_bar)
+
+# Create a File menu
+file_menu = tk.Menu(menu_bar, tearoff=0)
+menu_bar.add_cascade(label="File", menu=file_menu)
+file_menu.add_command(label="Exit", command=exit_application)
+
+# Create a Help menu
+help_menu = tk.Menu(menu_bar, tearoff=0)
+menu_bar.add_cascade(label="Help", menu=help_menu)
+help_menu.add_command(label="Help", command=create_help_tab)
+help_menu.add_command(label="About", command=create_about_tab)
+help_menu.add_command(label="How", command=create_how_tab)
 
 # Start the GUI main loop
 root.mainloop()
