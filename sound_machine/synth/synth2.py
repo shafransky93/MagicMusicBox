@@ -166,83 +166,100 @@ def update_tone():
 root = tk.Tk()
 root.title("Drone Sound Generator")
 
+# Create a frame for the oscillator controls
+oscillator_frame = tk.Frame(root)
+oscillator_frame.pack(pady=10)
+
 # Amplitude slider
-amplitude_label = tk.Label(root, text="Amplitude")
-amplitude_label.pack()
-amplitude_slider = tk.Scale(root, from_=0, to=1, resolution=0.01, orient="horizontal")
+amplitude_label = tk.Label(oscillator_frame, text="Amplitude")
+amplitude_label.pack(side="left")
+amplitude_slider = tk.Scale(oscillator_frame, from_=0, to=1, resolution=0.01, orient="horizontal")
 amplitude_slider.set(0.5)
-amplitude_slider.pack()
+amplitude_slider.pack(side="left", padx=10)
 
 # Frequency slider
-frequency_label = tk.Label(root, text="Frequency (Hz)")
-frequency_label.pack()
-frequency_slider = tk.Scale(root, from_=20, to=2000, resolution=1, orient="horizontal")
+frequency_label = tk.Label(oscillator_frame, text="Frequency (Hz)")
+frequency_label.pack(side="left")
+frequency_slider = tk.Scale(oscillator_frame, from_=20, to=2000, resolution=1, orient="horizontal")
 frequency_slider.set(440)
-frequency_slider.pack()
+frequency_slider.pack(side="left", padx=10)
 
 # Pulse width (Duty Cycle) slider
-pulse_width_label = tk.Label(root, text="Pulse Width")
-pulse_width_label.pack()
-pulse_width_slider = tk.Scale(root, from_=0, to=100, orient="horizontal")
+pulse_width_label = tk.Label(oscillator_frame, text="Pulse Width")
+pulse_width_label.pack(side="left")
+pulse_width_slider = tk.Scale(oscillator_frame, from_=0, to=100, orient="horizontal")
 pulse_width_slider.set(50)  # Set initial pulse width to 50%
-pulse_width_slider.pack()
+pulse_width_slider.pack(side="left", padx=10)
 
 # Attack, Decay, Sustain, and Release sliders
-attack_label = tk.Label(root, text="Attack (ms)")
-attack_label.pack()
-attack_slider = tk.Scale(root, from_=0, to=500, resolution=1, orient="horizontal")
+adsr_frame = tk.Frame(root)
+adsr_frame.pack(pady=10)
+
+attack_label = tk.Label(adsr_frame, text="Attack (ms)")
+attack_label.pack(side="left")
+attack_slider = tk.Scale(adsr_frame, from_=0, to=500, resolution=1, orient="horizontal")
 attack_slider.set(10)
-attack_slider.pack()
+attack_slider.pack(side="left", padx=10)
 
-decay_label = tk.Label(root, text="Decay (ms)")
-decay_label.pack()
-decay_slider = tk.Scale(root, from_=0, to=500, resolution=1, orient="horizontal")
+decay_label = tk.Label(adsr_frame, text="Decay (ms)")
+decay_label.pack(side="left")
+decay_slider = tk.Scale(adsr_frame, from_=0, to=500, resolution=1, orient="horizontal")
 decay_slider.set(50)
-decay_slider.pack()
+decay_slider.pack(side="left", padx=10)
 
-sustain_label = tk.Label(root, text="Sustain (%)")
-sustain_label.pack()
-sustain_slider = tk.Scale(root, from_=0, to=100, orient="horizontal")
+sustain_label = tk.Label(adsr_frame, text="Sustain (%)")
+sustain_label.pack(side="left")
+sustain_slider = tk.Scale(adsr_frame, from_=0, to=100, orient="horizontal")
 sustain_slider.set(70)
-sustain_slider.pack()
+sustain_slider.pack(side="left", padx=10)
 
-release_label = tk.Label(root, text="Release (ms)")
-release_label.pack()
-release_slider = tk.Scale(root, from_=0, to=500, resolution=1, orient="horizontal")
+release_label = tk.Label(adsr_frame, text="Release (ms)")
+release_label.pack(side="left")
+release_slider = tk.Scale(adsr_frame, from_=0, to=500, resolution=1, orient="horizontal")
 release_slider.set(100)
-release_slider.pack()
+release_slider.pack(side="left", padx=10)
 
 # Waveform selection
-waveform_label = tk.Label(root, text="Waveform")
-waveform_label.pack()
+waveform_frame = tk.Frame(root)
+waveform_frame.pack(pady=10)
+
+waveform_label = tk.Label(waveform_frame, text="Waveform")
+waveform_label.pack(side="left", padx=10)
 
 waveform_var = tk.StringVar(value="Sine")
 
-sine_radio = tk.Radiobutton(root, text="Sine", variable=waveform_var, value="Sine")
-triangle_radio = tk.Radiobutton(root, text="Triangle", variable=waveform_var, value="Triangle")
-sawtooth_radio = tk.Radiobutton(root, text="Sawtooth", variable=waveform_var, value="Sawtooth")
-square_radio = tk.Radiobutton(root, text="Square", variable=waveform_var, value="Square")
+sine_radio = tk.Radiobutton(waveform_frame, text="Sine", variable=waveform_var, value="Sine")
+triangle_radio = tk.Radiobutton(waveform_frame, text="Triangle", variable=waveform_var, value="Triangle")
+sawtooth_radio = tk.Radiobutton(waveform_frame, text="Sawtooth", variable=waveform_var, value="Sawtooth")
+square_radio = tk.Radiobutton(waveform_frame, text="Square", variable=waveform_var, value="Square")
 
-sine_radio.pack()
-triangle_radio.pack()
-sawtooth_radio.pack()
-square_radio.pack()
+sine_radio.pack(side="left", padx=10)
+triangle_radio.pack(side="left", padx=10)
+sawtooth_radio.pack(side="left", padx=10)
+square_radio.pack(side="left", padx=10)
 
 # Cutoff frequency slider
-cutoff_frequency_label = tk.Label(root, text="Cutoff Frequency (Hz)")
-cutoff_frequency_label.pack()
-cutoff_frequency_slider = tk.Scale(root, from_=1, to=20000, resolution=1, orient="horizontal")
+filter_frame = tk.Frame(root)
+filter_frame.pack(pady=10)
+
+cutoff_frequency_label = tk.Label(filter_frame, text="Cutoff Frequency (Hz)")
+cutoff_frequency_label.pack(side="left")
+cutoff_frequency_slider = tk.Scale(filter_frame, from_=1, to=20000, resolution=1, orient="horizontal")
 cutoff_frequency_slider.set(10000)  # Set an initial cutoff frequency
-cutoff_frequency_slider.pack()
+cutoff_frequency_slider.pack(side="left", padx=10)
 
 # Initialize the filter with an initial cutoff frequency
 cutoff_frequency = cutoff_frequency_slider.get()
 nyquist_frequency = 0.5 * sample_rate
 b, a = signal.butter(1, cutoff_frequency / nyquist_frequency, btype='low', analog=False)
 
+# Create a frame for the oscilloscope
+oscilloscope_frame = tk.Frame(root)
+oscilloscope_frame.pack(pady=10)
+
 # Create a Figure for the oscilloscope
 fig = plt.figure(figsize=(6, 3))
-canvas = FigureCanvasTkAgg(fig, master=root)
+canvas = FigureCanvasTkAgg(fig, master=oscilloscope_frame)
 canvas.get_tk_widget().pack()
 
 # Function to handle octave change
